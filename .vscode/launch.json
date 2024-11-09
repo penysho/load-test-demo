@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "build 'backend'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=backend",
+          "--package=backend",
+          "--manifest-path=backend/Cargo.toml"
+        ],
+        "filter": {
+          "name": "backend",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/backend/.env"
+    }
+  ]
+}
