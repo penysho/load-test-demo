@@ -15,7 +15,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/posts/:id", get(handler::get_post))
-        .route("/posts", get(handler::get_posts))
+        .route("/posts", get(handler::get_posts).post(handler::create_post))
         .route("/health", get(handler::health))
         .with_state(pool);
 

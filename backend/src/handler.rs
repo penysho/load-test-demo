@@ -7,7 +7,10 @@ use axum::{
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{db::DbPool, models::Post};
+use crate::{
+    db::DbPool,
+    models::{NewPost, Post},
+};
 
 pub async fn health() -> impl IntoResponse {
     Json("ok")
@@ -28,7 +31,6 @@ pub async fn get_post(
     use crate::schema::posts::dsl::*;
 
     let mut conn = pool.get().map_err(internal_error)?;
-    let mut response = vec![];
 
     let results = posts
         .filter(id.eq(path_id))
@@ -36,16 +38,21 @@ pub async fn get_post(
         .load(&mut conn)
         .expect("Error loading posts");
 
-    for row in results {
-        response.push(PostDTO {
-            id: row.id,
-            title: row.title,
-            body: row.body,
-            published: row.published,
-        });
+    if results.len() == 0 {
+        return Err((StatusCode::NOT_FOUND, "Post not found".to_string()));
     }
 
-    Ok(Json(response))
+    Ok(Json(
+        results
+            .into_iter()
+            .map(|row| PostDTO {
+                id: row.id,
+                title: row.title,
+                body: row.body,
+                published: row.published,
+            })
+            .collect(),
+    ))
 }
 
 pub async fn get_posts(
@@ -54,23 +61,56 @@ pub async fn get_posts(
     use crate::schema::posts::dsl::*;
 
     let mut conn = pool.get().map_err(internal_error)?;
-    let mut response = vec![];
 
     let results = posts
         .select(Post::as_select())
         .load(&mut conn)
         .expect("Error loading posts");
 
-    for row in results {
-        response.push(PostDTO {
-            id: row.id,
-            title: row.title,
-            body: row.body,
-            published: row.published,
-        });
-    }
+    Ok(Json(
+        results
+            .into_iter()
+            .map(|row| PostDTO {
+                id: row.id,
+                title: row.title,
+                body: row.body,
+                published: row.published,
+            })
+            .collect(),
+    ))
+}
 
-    Ok(Json(response))
+#[derive(Debug, Deserialize)]
+pub struct PostRequest {
+    pub title: String,
+    pub body: String,
+}
+
+pub async fn create_post(
+    State(pool): State<DbPool>,
+    Json(request): Json<PostRequest>,
+) -> Result<Json<PostDTO>, (StatusCode, String)> {
+    use crate::schema::posts;
+
+    let mut conn = pool.get().map_err(internal_error)?;
+
+    let new_post = NewPost {
+        title: &request.title,
+        body: &request.body,
+    };
+
+    let post = diesel::insert_into(posts::table)
+        .values(&new_post)
+        .returning(Post::as_returning())
+        .get_result(&mut conn)
+        .expect("Error saving new post");
+
+    Ok(Json(PostDTO {
+        id: post.id,
+        title: post.title,
+        body: post.body,
+        published: post.published,
+    }))
 }
 
 fn internal_error<E>(err: E) -> (StatusCode, String)
