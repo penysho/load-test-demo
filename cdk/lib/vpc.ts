@@ -1,14 +1,14 @@
 import { Fn, Stack, StackProps, aws_ec2 as ec2 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 
-export interface VpcProps extends StackProps {
+export interface VpcStackProps extends StackProps {
   deployEnvironment: string;
 }
 
-export class Vpc extends Stack {
+export class VpcStack extends Stack {
   public readonly vpc: ec2.IVpc;
 
-  constructor(scope: Construct, id: string, props: VpcProps) {
+  constructor(scope: Construct, id: string, props: VpcStackProps) {
     super(scope, id, props);
 
     // VPC

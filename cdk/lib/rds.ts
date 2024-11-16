@@ -9,17 +9,17 @@ import {
 import { SubnetType } from "aws-cdk-lib/aws-ec2";
 
 import { Construct } from "constructs";
-import { Vpc } from "./vpc";
+import { VpcStack } from "./vpc";
 import path = require("path");
 
-export interface DbProps extends StackProps {
+export interface RdsStackProps extends StackProps {
   projectName: string;
   deployEnvironment: string;
-  vpcStack: Vpc;
+  vpcStack: VpcStack;
 }
 
-export class Rds extends Stack {
-  constructor(scope: Construct, id: string, props: DbProps) {
+export class RdsStack extends Stack {
+  constructor(scope: Construct, id: string, props: RdsStackProps) {
     super(scope, id, props);
 
     const auroraPostgresVersion = "16.2";
