@@ -11,7 +11,6 @@ import { SubnetType } from "aws-cdk-lib/aws-ec2";
 import { Construct } from "constructs";
 import { deployEnv, projectName } from "../config/config";
 import { VpcStack } from "./vpc";
-import path = require("path");
 
 export interface RdsStackProps extends StackProps {
   vpcStack: VpcStack;
