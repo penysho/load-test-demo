@@ -1,7 +1,5 @@
-// プロジェクト設定
 export const projectName: string = "load-test-demo";
 
-// デプロイ環境設定
 export const envCodes = ["dev", "tst", "prd"] as const;
 export type EnvCode = (typeof envCodes)[number];
 
@@ -14,3 +12,33 @@ const getDeployEnvironment = () => {
 };
 
 export const deployEnvironment: EnvCode = getDeployEnvironment();
+
+export interface EnvironmentConfig {
+  hostedZoneId: string;
+  certificateArn: string;
+  defaultElbSecurityGroupId: string;
+}
+
+export const environmentConfig: Record<EnvCode, EnvironmentConfig> = {
+  dev: {
+    hostedZoneId: "Z1022019Y95GQ6B89EE1",
+    certificateArn:
+      "arn:aws:acm:ap-northeast-1:551152530614:certificate/78e1479b-2bb2-4f89-8836-a8ff91227dfb",
+    defaultElbSecurityGroupId: "sg-0781f96eb35b3aaad",
+  },
+  tst: {
+    hostedZoneId: "Z1022019Y95GQ6B89EE1",
+    certificateArn:
+      "arn:aws:acm:ap-northeast-1:551152530614:certificate/78e1479b-2bb2-4f89-8836-a8ff91227dfb",
+    defaultElbSecurityGroupId: "sg-0781f96eb35b3aaad",
+  },
+  prd: {
+    hostedZoneId: "Z1022019Y95GQ6B89EE1",
+    certificateArn:
+      "arn:aws:acm:ap-northeast-1:551152530614:certificate/78e1479b-2bb2-4f89-8836-a8ff91227dfb",
+    defaultElbSecurityGroupId: "sg-0781f96eb35b3aaad",
+  },
+};
+
+export const currentEnvironmentConfig: EnvironmentConfig =
+  environmentConfig[deployEnvironment];
