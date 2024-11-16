@@ -9,12 +9,11 @@ import {
 import { SubnetType } from "aws-cdk-lib/aws-ec2";
 
 import { Construct } from "constructs";
+import { deployEnv, projectName } from "../config/config";
 import { VpcStack } from "./vpc";
 import path = require("path");
 
 export interface RdsStackProps extends StackProps {
-  projectName: string;
-  deployEnvironment: string;
   vpcStack: VpcStack;
 }
 
@@ -40,8 +39,8 @@ export class RdsStack extends Stack {
      */
     const rdsClientSg = new ec2.SecurityGroup(this, `RdsClientSg`, {
       vpc,
-      securityGroupName: `${props.projectName}-${props.deployEnvironment}-rds-client`,
-      description: `${props.projectName}-${props.deployEnvironment} RDS Client Security Group.`,
+      securityGroupName: `${projectName}-${deployEnv}-rds-client`,
+      description: `${projectName}-${deployEnv} RDS Client Security Group.`,
       allowAllOutbound: true,
     });
 
@@ -53,8 +52,8 @@ export class RdsStack extends Stack {
       `RdsRotateSecretsSg`,
       {
         vpc,
-        securityGroupName: `${props.projectName}-${props.deployEnvironment}-rds-rotate-secrets`,
-        description: `${props.projectName}-${props.deployEnvironment} RDS Secrets rotate Security Group.`,
+        securityGroupName: `${projectName}-${deployEnv}-rds-rotate-secrets`,
+        description: `${projectName}-${deployEnv} RDS Secrets rotate Security Group.`,
         allowAllOutbound: true,
       }
     );
@@ -64,8 +63,8 @@ export class RdsStack extends Stack {
      */
     const rdsProxySg = new ec2.SecurityGroup(this, `RdsProxySg`, {
       vpc,
-      securityGroupName: `${props.projectName}-${props.deployEnvironment}-rds-proxy`,
-      description: `${props.projectName}-${props.deployEnvironment} RDS Proxy Security Group.`,
+      securityGroupName: `${projectName}-${deployEnv}-rds-proxy`,
+      description: `${projectName}-${deployEnv} RDS Proxy Security Group.`,
       allowAllOutbound: true,
     });
     rdsProxySg.addIngressRule(
@@ -78,8 +77,8 @@ export class RdsStack extends Stack {
      */
     const rdsSg = new ec2.SecurityGroup(this, `RdsSg`, {
       vpc,
-      securityGroupName: `${props.projectName}-${props.deployEnvironment}-rds`,
-      description: `${props.projectName}-${props.deployEnvironment} RDS Instance Security Group.`,
+      securityGroupName: `${projectName}-${deployEnv}-rds`,
+      description: `${projectName}-${deployEnv} RDS Instance Security Group.`,
       allowAllOutbound: true,
     });
     rdsSg.addIngressRule(
@@ -99,8 +98,8 @@ export class RdsStack extends Stack {
      * RDS Admin User Secret
      */
     const rdsAdminSecret = new sm.Secret(this, `RdsAdminSecret`, {
-      secretName: `${props.projectName}-${props.deployEnvironment}/rds/admin-secret`,
-      description: `${props.projectName}-${props.deployEnvironment} RDS Admin User Secret.`,
+      secretName: `${projectName}-${deployEnv}/rds/admin-secret`,
+      description: `${projectName}-${deployEnv} RDS Admin User Secret.`,
       generateSecretString: {
         excludeCharacters: EXCLUDE_CHARACTERS,
         generateStringKey: "password",
@@ -114,9 +113,9 @@ export class RdsStack extends Stack {
      * RDS Subnet Group
      */
     const subnetGroup = new rds.SubnetGroup(this, `SubnetGroup`, {
-      description: `The subnet group to be used by Aurora in ${props.projectName}-${props.deployEnvironment}.`,
+      description: `The subnet group to be used by Aurora in ${projectName}-${deployEnv}.`,
       vpc,
-      subnetGroupName: `${props.projectName}-${props.deployEnvironment}`,
+      subnetGroupName: `${projectName}-${deployEnv}`,
       // 開発環境向けにパブリックアクセス可能にする
       vpcSubnets: publicSubnets,
     });
@@ -125,7 +124,7 @@ export class RdsStack extends Stack {
      * RDS Parameter Group
      */
     const auroraPostgresMajorVersion = auroraPostgresVersion.split(".")[0];
-    const parameterGroupName = `${props.projectName}-${props.deployEnvironment}`;
+    const parameterGroupName = `${projectName}-${deployEnv}`;
     const parameterGroup = new rds.ParameterGroup(this, `ParameterGroup`, {
       engine: rds.DatabaseClusterEngine.auroraPostgres({
         version: rds.AuroraPostgresEngineVersion.of(
@@ -133,7 +132,7 @@ export class RdsStack extends Stack {
           auroraPostgresMajorVersion
         ),
       }),
-      description: `${props.projectName}-${props.deployEnvironment} Parameter group for aurora-postgresql.`,
+      description: `${projectName}-${deployEnv} Parameter group for aurora-postgresql.`,
     });
     parameterGroup.bindToInstance({});
     const cfnParameterGroup = parameterGroup.node
@@ -155,12 +154,12 @@ export class RdsStack extends Stack {
         ),
       }),
       credentials: rds.Credentials.fromSecret(rdsAdminSecret),
-      clusterIdentifier: `${props.projectName}-${props.deployEnvironment}-cluster`,
+      clusterIdentifier: `${projectName}-${deployEnv}-cluster`,
       deletionProtection: false,
       iamAuthentication: true,
       readers: [
         rds.ClusterInstance.provisioned(`Reader1`, {
-          instanceIdentifier: `${props.projectName}-${props.deployEnvironment}-reader-1`,
+          instanceIdentifier: `${projectName}-${deployEnv}-reader-1`,
           instanceType: ec2.InstanceType.of(
             instanceClass as ec2.InstanceClass,
             instanceSize as ec2.InstanceSize
@@ -175,7 +174,7 @@ export class RdsStack extends Stack {
       subnetGroup,
       vpc,
       writer: rds.ClusterInstance.provisioned(`Writer`, {
-        instanceIdentifier: `${props.projectName}-${props.deployEnvironment}-writer`,
+        instanceIdentifier: `${projectName}-${deployEnv}-writer`,
         instanceType: ec2.InstanceType.of(
           instanceClass as ec2.InstanceClass,
           instanceSize as ec2.InstanceSize

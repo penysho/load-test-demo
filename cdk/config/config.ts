@@ -3,7 +3,7 @@ export const projectName: string = "load-test-demo";
 export const envCodes = ["dev", "tst", "prd"] as const;
 export type EnvCode = (typeof envCodes)[number];
 
-const getDeployEnvironment = () => {
+const getDeployEnv = () => {
   const env = process.env.DEPLOY_ENV;
   if (envCodes.includes(env as EnvCode)) {
     return env as EnvCode;
@@ -11,15 +11,15 @@ const getDeployEnvironment = () => {
   return "tst";
 };
 
-export const deployEnvironment: EnvCode = getDeployEnvironment();
+export const deployEnv: EnvCode = getDeployEnv();
 
-export interface EnvironmentConfig {
+export interface EnvConfig {
   hostedZoneId: string;
   certificateArn: string;
   defaultElbSecurityGroupId: string;
 }
 
-export const environmentConfig: Record<EnvCode, EnvironmentConfig> = {
+export const envConfig: Record<EnvCode, EnvConfig> = {
   dev: {
     hostedZoneId: "Z1022019Y95GQ6B89EE1",
     certificateArn:
@@ -40,5 +40,4 @@ export const environmentConfig: Record<EnvCode, EnvironmentConfig> = {
   },
 };
 
-export const currentEnvironmentConfig: EnvironmentConfig =
-  environmentConfig[deployEnvironment];
+export const currentEnvConfig: EnvConfig = envConfig[deployEnv];
