@@ -11,11 +11,8 @@ export class VpcStack extends Stack {
     super(scope, id, props);
 
     // VPC
-    // https://docs.aws.amazon.com/cdk/v2/guide/tokens.html
-    // Fn.importValueでは、返却されるのは値を指すトークンのため、fromVpcAttributesを利用する
     this.vpc = ec2.Vpc.fromVpcAttributes(this, "vpc", {
       vpcId: Fn.importValue(`shared-vpc-${deployEnv}-Vpc`),
-      // 動的に指定不可かつデプロイ環境ごとに共通のため直接指定する
       availabilityZones: ["ap-northeast-1a", "ap-northeast-1c"],
       publicSubnetIds: [
         Fn.importValue(`shared-vpc-${deployEnv}-PublicSubnet1`),

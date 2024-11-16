@@ -1,3 +1,6 @@
+/**
+ * Define common configuration values for the project.
+ */
 export const projectName: string = "load-test-demo";
 
 export const envCodes = ["dev", "tst", "prd"] as const;
@@ -18,6 +21,10 @@ export interface EnvConfig {
   certificateArn: string;
   defaultElbSecurityGroupId: string;
 }
+
+/**
+ * Define different settings for each deployment environment in the project.
+ */
 
 export const envConfig: Record<EnvCode, EnvConfig> = {
   dev: {

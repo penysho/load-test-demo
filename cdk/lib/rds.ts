@@ -24,7 +24,6 @@ export class RdsStack extends Stack {
     const ec2InstanceType = "t3.medium";
     const EXCLUDE_CHARACTERS = "\"@'%$#&().,{_?<≠^>[:;`+*!]}=~|¥/\\";
 
-    // VPC
     const vpc = props.vpcStack.vpc;
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
@@ -163,7 +162,7 @@ export class RdsStack extends Stack {
             instanceClass as ec2.InstanceClass,
             instanceSize as ec2.InstanceSize
           ),
-          // 開発環境向けにパブリックアクセス可能にする
+          // Make publicly accessible for development environments.
           publiclyAccessible: true,
           parameterGroup,
         }),
@@ -178,7 +177,7 @@ export class RdsStack extends Stack {
           instanceClass as ec2.InstanceClass,
           instanceSize as ec2.InstanceSize
         ),
-        // 開発環境向けにパブリックアクセス可能にする
+        // Make publicly accessible for development environments.
         publiclyAccessible: true,
         parameterGroup,
       }),
