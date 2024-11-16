@@ -37,6 +37,7 @@
   },
 
   "[javascript][typescript][javascriptreact][typescriptreact]": {
+    "editor.tabSize": 2,
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       // import漏れの追加

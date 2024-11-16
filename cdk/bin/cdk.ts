@@ -3,8 +3,13 @@ import * as cdk from "aws-cdk-lib";
 import "source-map-support/register";
 import { deployEnvironment, projectName } from "../config/config";
 import { DbProps, Rds } from "../lib/rds";
+import { Vpc } from "../lib/vpc";
 
 const app = new cdk.App();
+
+const vpcStack = new Vpc(app, `${projectName}-vpc-${deployEnvironment}`, {
+  deployEnvironment: deployEnvironment,
+});
 
 export const rdsProps: DbProps = {
   env: {
@@ -13,6 +18,7 @@ export const rdsProps: DbProps = {
   },
   projectName: projectName,
   deployEnvironment: deployEnvironment,
+  vpcStack: vpcStack,
 };
 
 new Rds(app, `${projectName}-rds-${deployEnvironment}`, rdsProps);

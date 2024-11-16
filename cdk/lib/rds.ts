@@ -1,6 +1,5 @@
 import {
   Duration,
-  Fn,
   Stack,
   StackProps,
   aws_ec2 as ec2,
@@ -10,11 +9,13 @@ import {
 import { SubnetType } from "aws-cdk-lib/aws-ec2";
 
 import { Construct } from "constructs";
+import { Vpc } from "./vpc";
 import path = require("path");
 
 export interface DbProps extends StackProps {
   projectName: string;
   deployEnvironment: string;
+  vpcStack: Vpc;
 }
 
 export class Rds extends Stack {
@@ -26,21 +27,7 @@ export class Rds extends Stack {
     const EXCLUDE_CHARACTERS = "\"@'%$#&().,{_?<≠^>[:;`+*!]}=~|¥/\\";
 
     // VPC
-    // https://docs.aws.amazon.com/cdk/v2/guide/tokens.html
-    // Fn.importValueでは、返却されるのは値を指すトークンのため、fromVpcAttributesを利用する
-    const vpc = ec2.Vpc.fromVpcAttributes(this, "vpc", {
-      vpcId: Fn.importValue(`shared-vpc-${props.deployEnvironment}-Vpc`),
-      // 動的に指定不可かつデプロイ環境ごとに共通のため直接指定する
-      availabilityZones: ["ap-northeast-1a", "ap-northeast-1c"],
-      publicSubnetIds: [
-        Fn.importValue(`shared-vpc-${props.deployEnvironment}-PublicSubnet1`),
-        Fn.importValue(`shared-vpc-${props.deployEnvironment}-PublicSubnet2`),
-      ],
-      privateSubnetIds: [
-        Fn.importValue(`shared-vpc-${props.deployEnvironment}-PrivateSubnet1`),
-        Fn.importValue(`shared-vpc-${props.deployEnvironment}-PrivateSubnet2`),
-      ],
-    });
+    const vpc = props.vpcStack.vpc;
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
     });
