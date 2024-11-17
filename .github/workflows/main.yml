@@ -8,7 +8,7 @@ on:
 env:
   REPOSITORY_NAME: load-test-demo-tst
   PROJECT_NAME: backend
-  ROLE_TO_ASSUME: ${{ vars.tst_role_to_assume }}
+  ROLE_TO_ASSUME: ${{ vars.TST_ROLE_TO_ASSUME }}
 
 jobs:
   push:
