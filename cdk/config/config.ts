@@ -1,6 +1,9 @@
 /**
- * Define common configuration values for the project.
+ * Static values that do not depend on resources defined in our project are defined here and used from each stack.
+ * Dynamic variables that depend on resources should be passed to each stack as props.
  */
+
+// Define common configuration values for the project.
 export const projectName: string = "load-test-demo";
 
 export const envCodes = ["dev", "tst", "prd"] as const;
@@ -23,10 +26,7 @@ export interface EnvConfig {
   ecsEnvFileS3Arn: string;
 }
 
-/**
- * Define different settings for each deployment environment in the project.
- */
-
+// Define different settings for each deployment environment in the project.
 export const envConfig: Record<EnvCode, EnvConfig> = {
   dev: {
     hostedZoneId: "Z1022019Y95GQ6B89EE1",
