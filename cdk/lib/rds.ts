@@ -58,20 +58,6 @@ export class RdsStack extends Stack {
     );
 
     /**
-     * Security Group for RDS Proxy
-     */
-    const rdsProxySg = new ec2.SecurityGroup(this, `RdsProxySg`, {
-      vpc,
-      securityGroupName: `${projectName}-${deployEnv}-rds-proxy`,
-      description: `${projectName}-${deployEnv} RDS Proxy Security Group.`,
-      allowAllOutbound: true,
-    });
-    rdsProxySg.addIngressRule(
-      ec2.Peer.securityGroupId(this.rdsClientSg.securityGroupId),
-      ec2.Port.tcp(5432)
-    );
-
-    /**
      * Security Group for RDS
      */
     const rdsSg = new ec2.SecurityGroup(this, `RdsSg`, {
@@ -86,10 +72,6 @@ export class RdsStack extends Stack {
     );
     rdsSg.addIngressRule(
       ec2.Peer.securityGroupId(rdsRotateSecretsSg.securityGroupId),
-      ec2.Port.tcp(5432)
-    );
-    rdsSg.addIngressRule(
-      ec2.Peer.securityGroupId(rdsProxySg.securityGroupId),
       ec2.Port.tcp(5432)
     );
 
