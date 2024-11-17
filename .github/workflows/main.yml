@@ -1,0 +1,68 @@
+name: Deploy to Amazon ECS using Blue/Green deployment
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REPOSITORY_NAME: load-test-demo-tst
+  PROJECT_NAME: backend
+  ROLE_TO_ASSUME: ${{ vars.tst_role_to_assume }}
+
+jobs:
+  push:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ap-northeast-1
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Docker image build and push to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: load-test-demo-tst
+          IMAGE_TAG: ${{ github.sha }}
+          DOCKERFILE_PATH: docker/backend/Dockerfile.prod
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -f $DOCKERFILE_PATH .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Fetch TaskDefinition from ECS and generate task-def-api.json (api)
+        run: |
+          aws ecs describe-task-definition --task-definition load-test-demo-tst | \
+            jq '.taskDefinition | del (.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities)' > task-def-api.json
+
+      - name: Render TaskDefinition
+        id: render-container-api
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def-api.json
+          container-name: api
+          image: ${{ steps.login-ecr.outputs.registry }}/load-test-demo-tst:${{ github.sha }}
+
+      - name: Deploy app with CodeDeploy Blue/Green deployment
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-container-api.outputs.task-definition }}
+          cluster: load-test-demo-tst
+          service: load-test-demo-tst-service
+          codedeploy-appspec: codedeploy/appspec.yml
+          codedeploy-application: load-test-demo-tst
+          codedeploy-deployment-group: load-test-demo-tst-group1
