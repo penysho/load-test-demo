@@ -1,7 +1,7 @@
 #################
 ## build stage ##
 #################
-FROM rust:1-slim-bullseye AS builder
+FROM rust:1-slim-bookworm AS builder
 WORKDIR /code
 
 # install required build dependencies
@@ -24,7 +24,7 @@ RUN cargo build --release
 ###############
 ## run stage ##
 ###############
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 WORKDIR /app
 
 # install runtime dependencies
