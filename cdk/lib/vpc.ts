@@ -4,6 +4,9 @@ import { deployEnv } from "../config/config";
 
 export interface VpcStackProps extends StackProps {}
 
+/**
+ * Define VPC resources.
+ */
 export class VpcStack extends Stack {
   public readonly vpc: ec2.IVpc;
 
@@ -11,6 +14,7 @@ export class VpcStack extends Stack {
     super(scope, id, props);
 
     // VPC
+    // Read in VPCs for common use that have already been created and imported into the CDK without defining a new one.
     this.vpc = ec2.Vpc.fromVpcAttributes(this, "vpc", {
       vpcId: Fn.importValue(`shared-vpc-${deployEnv}-Vpc`),
       availabilityZones: ["ap-northeast-1a", "ap-northeast-1c"],

@@ -16,28 +16,22 @@ export class ElbStack extends cdk.Stack {
   /**
    * This is the ARN of the ALB for applications.
    */
-  public readonly LoadBalancerArn;
+  public readonly LoadBalancer: elasticloadbalancingv2.CfnLoadBalancer;
   /**
    * Listener ARN for port 80 used by ALB in applications.
    */
-  public readonly Elb80ListenerArn;
+  public readonly Elb80Listener: elasticloadbalancingv2.CfnListener;
   /**
    * Listener ARN for port 443 used by ALB in applications.
    */
-  public readonly Elb443ListenerArn;
-  /**
-   * This is the ARN of the listener for the Green environment used in the ALB of applications.
-   */
-  public readonly GreenListenerArn;
+  public readonly Elb443Listener: elasticloadbalancingv2.CfnListener;
   /**
    * This is the group ID of the security group for the ALB target of applications.
    */
-  public readonly ElbTargetSecurityGroupId;
-
-  public readonly LoadBalancer: elasticloadbalancingv2.CfnLoadBalancer;
-  public readonly Elb80Listener: elasticloadbalancingv2.CfnListener;
-  public readonly Elb443Listener: elasticloadbalancingv2.CfnListener;
   public readonly GreenListener: elasticloadbalancingv2.CfnListener;
+  /**
+   * This is the ARN of the listener for the Green environment used in the ALB of applications.
+   */
   public readonly ElbTargetSecurityGroup: ec2.CfnSecurityGroup;
 
   public constructor(scope: cdk.App, id: string, props: ElbStackProps) {
@@ -183,44 +177,5 @@ export class ElbStack extends cdk.Stack {
       },
     });
     RecordSet.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
-
-    // Outputs
-    this.LoadBalancerArn = this.LoadBalancer.ref;
-    new cdk.CfnOutput(this, "CfnOutputLoadBalancerArn", {
-      key: "LoadBalancerArn",
-      description: "This is the ARN of the ALB for applications.",
-      exportName: `${this.stackName}-LoadBalancerArn`,
-      value: this.LoadBalancerArn!.toString(),
-    });
-    this.Elb80ListenerArn = this.Elb80Listener.ref;
-    new cdk.CfnOutput(this, "CfnOutputElb80ListenerArn", {
-      key: "Elb80ListenerArn",
-      description: "Listener ARN for port 80 used by ALB in applications.",
-      exportName: `${this.stackName}-Elb80ListenerArn`,
-      value: this.Elb80ListenerArn!.toString(),
-    });
-    this.Elb443ListenerArn = this.Elb443Listener.ref;
-    new cdk.CfnOutput(this, "CfnOutputElb443ListenerArn", {
-      key: "Elb443ListenerArn",
-      description: "Listener ARN for port 443 used by ALB in applications.",
-      exportName: `${this.stackName}-Elb443ListenerArn`,
-      value: this.Elb443ListenerArn!.toString(),
-    });
-    this.GreenListenerArn = this.GreenListener.ref;
-    new cdk.CfnOutput(this, "CfnOutputGreenListenerArn", {
-      key: "GreenListenerArn",
-      description:
-        "This is the ARN of the listener for the Green environment used in the ALB of applications.",
-      exportName: `${this.stackName}-GreenListenerArn`,
-      value: this.GreenListenerArn!.toString(),
-    });
-    this.ElbTargetSecurityGroupId = this.ElbTargetSecurityGroup.attrGroupId;
-    new cdk.CfnOutput(this, "CfnOutputElbTargetSecurityGroupId", {
-      key: "ElbTargetSecurityGroupId",
-      description:
-        "This is the group ID of the security group for the ALB target of applications.",
-      exportName: `${this.stackName}-ElbTargetSecurityGroupId`,
-      value: this.ElbTargetSecurityGroupId!.toString(),
-    });
   }
 }

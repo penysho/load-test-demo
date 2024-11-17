@@ -15,7 +15,13 @@ export interface RdsStackProps extends StackProps {
   readonly vpcStack: VpcStack;
 }
 
+/**
+ * Define RDS resources.
+ */
 export class RdsStack extends Stack {
+  /**
+   * Security groups to attach to clients to make RDS accessible.
+   */
   public readonly rdsClientSg: ec2.SecurityGroup;
 
   constructor(scope: Construct, id: string, props: RdsStackProps) {

@@ -18,7 +18,7 @@ export interface AppStackProps extends cdk.StackProps {
 }
 
 /**
- * Define resources for the backend project.
+ * Define resources for the applications project.
  */
 export class AppStack extends cdk.Stack {
   public constructor(scope: cdk.App, id: string, props: AppStackProps) {
