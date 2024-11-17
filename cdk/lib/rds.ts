@@ -1,5 +1,4 @@
 import {
-  Duration,
   Stack,
   StackProps,
   aws_ec2 as ec2,
@@ -13,10 +12,12 @@ import { deployEnv, projectName } from "../config/config";
 import { VpcStack } from "./vpc";
 
 export interface RdsStackProps extends StackProps {
-  vpcStack: VpcStack;
+  readonly vpcStack: VpcStack;
 }
 
 export class RdsStack extends Stack {
+  public readonly rdsClientSg: ec2.SecurityGroup;
+
   constructor(scope: Construct, id: string, props: RdsStackProps) {
     super(scope, id, props);
 
@@ -35,7 +36,7 @@ export class RdsStack extends Stack {
     /**
      * Security Group for RDS client
      */
-    const rdsClientSg = new ec2.SecurityGroup(this, `RdsClientSg`, {
+    this.rdsClientSg = new ec2.SecurityGroup(this, `RdsClientSg`, {
       vpc,
       securityGroupName: `${projectName}-${deployEnv}-rds-client`,
       description: `${projectName}-${deployEnv} RDS Client Security Group.`,
@@ -66,7 +67,7 @@ export class RdsStack extends Stack {
       allowAllOutbound: true,
     });
     rdsProxySg.addIngressRule(
-      ec2.Peer.securityGroupId(rdsClientSg.securityGroupId),
+      ec2.Peer.securityGroupId(this.rdsClientSg.securityGroupId),
       ec2.Port.tcp(5432)
     );
 
@@ -80,7 +81,7 @@ export class RdsStack extends Stack {
       allowAllOutbound: true,
     });
     rdsSg.addIngressRule(
-      ec2.Peer.securityGroupId(rdsClientSg.securityGroupId),
+      ec2.Peer.securityGroupId(this.rdsClientSg.securityGroupId),
       ec2.Port.tcp(5432)
     );
     rdsSg.addIngressRule(
@@ -114,7 +115,7 @@ export class RdsStack extends Stack {
       description: `The subnet group to be used by Aurora in ${projectName}-${deployEnv}.`,
       vpc,
       subnetGroupName: `${projectName}-${deployEnv}`,
-      // 開発環境向けにパブリックアクセス可能にする
+      // Make publicly accessible for development environments.
       vpcSubnets: publicSubnets,
     });
 
@@ -186,15 +187,15 @@ export class RdsStack extends Stack {
     /**
      * RDS Secret rotation
      */
-    new sm.SecretRotation(this, `DbAdminSecretRotation`, {
-      application: sm.SecretRotationApplication.POSTGRES_ROTATION_SINGLE_USER,
-      secret: rdsAdminSecret,
-      target: rdsCluster,
-      vpc,
-      automaticallyAfter: Duration.days(3),
-      excludeCharacters: EXCLUDE_CHARACTERS,
-      securityGroup: rdsRotateSecretsSg,
-      vpcSubnets: privateSubnets,
-    });
+    // new sm.SecretRotation(this, `DbAdminSecretRotation`, {
+    //   application: sm.SecretRotationApplication.POSTGRES_ROTATION_SINGLE_USER,
+    //   secret: rdsAdminSecret,
+    //   target: rdsCluster,
+    //   vpc,
+    //   automaticallyAfter: Duration.days(3),
+    //   excludeCharacters: EXCLUDE_CHARACTERS,
+    //   securityGroup: rdsRotateSecretsSg,
+    //   vpcSubnets: privateSubnets,
+    // });
   }
 }

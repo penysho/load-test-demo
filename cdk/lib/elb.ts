@@ -10,25 +10,35 @@ export interface ElbStackProps extends cdk.StackProps {
 }
 
 /**
- * Define ALB resources for generic use in ECS Platform applications.
+ * Define ALB resources for generic use in applications.
  */
 export class ElbStack extends cdk.Stack {
   /**
-   * This is the ARN of the ALB for ECS Platform applications.
+   * This is the ARN of the ALB for applications.
    */
   public readonly LoadBalancerArn;
   /**
-   * Listener ARN for port 80 used by ALB in ECS Platform applications.
+   * Listener ARN for port 80 used by ALB in applications.
    */
   public readonly Elb80ListenerArn;
   /**
-   * Listener ARN for port 443 used by ALB in ECS Platform applications.
+   * Listener ARN for port 443 used by ALB in applications.
    */
   public readonly Elb443ListenerArn;
   /**
-   * This is the ARN of the listener for the Green environment used in the ALB of ECS Platform applications.
+   * This is the ARN of the listener for the Green environment used in the ALB of applications.
    */
   public readonly GreenListenerArn;
+  /**
+   * This is the group ID of the security group for the ALB target of applications.
+   */
+  public readonly ElbTargetSecurityGroupId;
+
+  public readonly LoadBalancer: elasticloadbalancingv2.CfnLoadBalancer;
+  public readonly Elb80Listener: elasticloadbalancingv2.CfnListener;
+  public readonly Elb443Listener: elasticloadbalancingv2.CfnListener;
+  public readonly GreenListener: elasticloadbalancingv2.CfnListener;
+  public readonly ElbTargetSecurityGroup: ec2.CfnSecurityGroup;
 
   public constructor(scope: cdk.App, id: string, props: ElbStackProps) {
     super(scope, id, props);
@@ -51,7 +61,7 @@ export class ElbStack extends cdk.Stack {
     );
     ElbSecurityGroup.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
-    const ElbTargetSecurityGroup = new ec2.CfnSecurityGroup(
+    this.ElbTargetSecurityGroup = new ec2.CfnSecurityGroup(
       this,
       "ElbTargetSecurityGroup",
       {
@@ -67,10 +77,10 @@ export class ElbStack extends cdk.Stack {
         vpcId: vpc.vpcId!,
       }
     );
-    ElbTargetSecurityGroup.cfnOptions.deletionPolicy =
+    this.ElbTargetSecurityGroup.cfnOptions.deletionPolicy =
       cdk.CfnDeletionPolicy.DELETE;
 
-    const LoadBalancer = new elasticloadbalancingv2.CfnLoadBalancer(
+    this.LoadBalancer = new elasticloadbalancingv2.CfnLoadBalancer(
       this,
       "LoadBalancer",
       {
@@ -95,9 +105,9 @@ export class ElbStack extends cdk.Stack {
         subnets: publicSubnets.subnetIds!,
       }
     );
-    LoadBalancer.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    this.LoadBalancer.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
-    const Elb443Listener = new elasticloadbalancingv2.CfnListener(
+    this.Elb443Listener = new elasticloadbalancingv2.CfnListener(
       this,
       "Elb443Listener",
       {
@@ -110,7 +120,7 @@ export class ElbStack extends cdk.Stack {
             type: "fixed-response",
           },
         ],
-        loadBalancerArn: LoadBalancer.ref,
+        loadBalancerArn: this.LoadBalancer.ref,
         port: 443,
         protocol: "HTTPS",
         certificates: [
@@ -120,9 +130,10 @@ export class ElbStack extends cdk.Stack {
         ],
       }
     );
-    Elb443Listener.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    this.Elb443Listener.cfnOptions.deletionPolicy =
+      cdk.CfnDeletionPolicy.DELETE;
 
-    const Elb80Listener = new elasticloadbalancingv2.CfnListener(
+    this.Elb80Listener = new elasticloadbalancingv2.CfnListener(
       this,
       "Elb80Listener",
       {
@@ -135,14 +146,14 @@ export class ElbStack extends cdk.Stack {
             type: "fixed-response",
           },
         ],
-        loadBalancerArn: LoadBalancer.ref,
+        loadBalancerArn: this.LoadBalancer.ref,
         port: 80,
         protocol: "HTTP",
       }
     );
-    Elb80Listener.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    this.Elb80Listener.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
-    const GreenListener = new elasticloadbalancingv2.CfnListener(
+    this.GreenListener = new elasticloadbalancingv2.CfnListener(
       this,
       "GreenListener",
       {
@@ -155,55 +166,61 @@ export class ElbStack extends cdk.Stack {
             type: "fixed-response",
           },
         ],
-        loadBalancerArn: LoadBalancer.ref,
+        loadBalancerArn: this.LoadBalancer.ref,
         port: 10443,
         protocol: "HTTP",
       }
     );
-    GreenListener.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    this.GreenListener.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
     const RecordSet = new route53.CfnRecordSet(this, "RecordSet", {
       name: "load-test-api.pesh-igpjt.com",
       hostedZoneId: currentEnvConfig.hostedZoneId,
       type: "A",
       aliasTarget: {
-        dnsName: LoadBalancer.attrDnsName,
-        hostedZoneId: LoadBalancer.attrCanonicalHostedZoneId,
+        dnsName: this.LoadBalancer.attrDnsName,
+        hostedZoneId: this.LoadBalancer.attrCanonicalHostedZoneId,
       },
     });
     RecordSet.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
     // Outputs
-    this.LoadBalancerArn = LoadBalancer.ref;
+    this.LoadBalancerArn = this.LoadBalancer.ref;
     new cdk.CfnOutput(this, "CfnOutputLoadBalancerArn", {
       key: "LoadBalancerArn",
-      description: "This is the ARN of the ALB for ECS Platform applications.",
+      description: "This is the ARN of the ALB for applications.",
       exportName: `${this.stackName}-LoadBalancerArn`,
       value: this.LoadBalancerArn!.toString(),
     });
-    this.Elb80ListenerArn = Elb80Listener.ref;
+    this.Elb80ListenerArn = this.Elb80Listener.ref;
     new cdk.CfnOutput(this, "CfnOutputElb80ListenerArn", {
       key: "Elb80ListenerArn",
-      description:
-        "Listener ARN for port 80 used by ALB in ECS Platform applications.",
+      description: "Listener ARN for port 80 used by ALB in applications.",
       exportName: `${this.stackName}-Elb80ListenerArn`,
       value: this.Elb80ListenerArn!.toString(),
     });
-    this.Elb443ListenerArn = Elb443Listener.ref;
+    this.Elb443ListenerArn = this.Elb443Listener.ref;
     new cdk.CfnOutput(this, "CfnOutputElb443ListenerArn", {
       key: "Elb443ListenerArn",
-      description:
-        "Listener ARN for port 443 used by ALB in ECS Platform applications.",
+      description: "Listener ARN for port 443 used by ALB in applications.",
       exportName: `${this.stackName}-Elb443ListenerArn`,
       value: this.Elb443ListenerArn!.toString(),
     });
-    this.GreenListenerArn = GreenListener.ref;
+    this.GreenListenerArn = this.GreenListener.ref;
     new cdk.CfnOutput(this, "CfnOutputGreenListenerArn", {
       key: "GreenListenerArn",
       description:
-        "This is the ARN of the listener for the Green environment used in the ALB of ECS Platform applications.",
+        "This is the ARN of the listener for the Green environment used in the ALB of applications.",
       exportName: `${this.stackName}-GreenListenerArn`,
       value: this.GreenListenerArn!.toString(),
+    });
+    this.ElbTargetSecurityGroupId = this.ElbTargetSecurityGroup.attrGroupId;
+    new cdk.CfnOutput(this, "CfnOutputElbTargetSecurityGroupId", {
+      key: "ElbTargetSecurityGroupId",
+      description:
+        "This is the group ID of the security group for the ALB target of applications.",
+      exportName: `${this.stackName}-ElbTargetSecurityGroupId`,
+      value: this.ElbTargetSecurityGroupId!.toString(),
     });
   }
 }
