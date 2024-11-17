@@ -35,7 +35,7 @@ export class CiStack extends cdk.Stack {
             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
           },
           StringLike: {
-            [`token.actions.githubusercontent.com:sub`]: `repo:${projectName}:ref:refs/heads/${currentEnvConfig.branch}`,
+            [`token.actions.githubusercontent.com:sub`]: `repo:penysho/${projectName}:ref:refs/heads/${currentEnvConfig.branch}`,
           },
         },
         "sts:AssumeRoleWithWebIdentity"
