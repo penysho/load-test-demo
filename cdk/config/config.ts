@@ -16,17 +16,17 @@ const getDeployEnv = () => {
   }
   return "tst";
 };
-
 export const deployEnv: EnvCode = getDeployEnv();
 
+// Define different settings for each deployment environment in the project.
 export interface EnvConfig {
   hostedZoneId: string;
   certificateArn: string;
   defaultElbSecurityGroupId: string;
   ecsEnvFileS3Arn: string;
+  branch: string;
 }
 
-// Define different settings for each deployment environment in the project.
 export const envConfig: Record<EnvCode, EnvConfig> = {
   dev: {
     hostedZoneId: "Z1022019Y95GQ6B89EE1",
@@ -35,6 +35,7 @@ export const envConfig: Record<EnvCode, EnvConfig> = {
     defaultElbSecurityGroupId: "sg-0781f96eb35b3aaad",
     ecsEnvFileS3Arn:
       "arn:aws:s3:::shared-tst-cicd/ecs/load-test-demo-app-dev/.env",
+    branch: "main",
   },
   tst: {
     hostedZoneId: "Z1022019Y95GQ6B89EE1",
@@ -43,6 +44,7 @@ export const envConfig: Record<EnvCode, EnvConfig> = {
     defaultElbSecurityGroupId: "sg-0781f96eb35b3aaad",
     ecsEnvFileS3Arn:
       "arn:aws:s3:::shared-tst-cicd/ecs/load-test-demo-app-tst/.env",
+    branch: "main",
   },
   prd: {
     hostedZoneId: "Z1022019Y95GQ6B89EE1",
@@ -51,6 +53,7 @@ export const envConfig: Record<EnvCode, EnvConfig> = {
     defaultElbSecurityGroupId: "sg-0781f96eb35b3aaad",
     ecsEnvFileS3Arn:
       "arn:aws:s3:::shared-tst-cicd/ecs/load-test-demo-app-prd/.env",
+    branch: "main",
   },
 };
 

@@ -21,6 +21,11 @@ export interface AppStackProps extends cdk.StackProps {
  * Define resources for the applications project.
  */
 export class AppStack extends cdk.Stack {
+  /**
+   * ECR
+   */
+  public readonly repository: ecr.CfnRepository;
+
   public constructor(scope: cdk.App, id: string, props: AppStackProps) {
     super(scope, id, props);
 
@@ -74,14 +79,14 @@ export class AppStack extends cdk.Stack {
     });
     logGroup.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
 
-    const repository = new ecr.CfnRepository(this, "Repository", {
+    this.repository = new ecr.CfnRepository(this, "Repository", {
       repositoryName: `${projectName}-${deployEnv}`,
       lifecyclePolicy: {
         lifecyclePolicyText:
           '{"rules":[{"rulePriority":1,"description":"Expire images older than 3 generations","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":3},"action":{"type":"expire"}}]}',
       },
     });
-    repository.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
+    this.repository.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
 
     const taskExecutionRole = new iam.CfnRole(this, "TaskExecutionRole", {
       roleName: `${projectName}-${deployEnv}-task-execution-role`,
@@ -184,7 +189,7 @@ export class AppStack extends cdk.Stack {
       containerDefinitions: [
         {
           name: containerName,
-          image: [repository.attrRepositoryUri, "latest"].join(":"),
+          image: [this.repository.attrRepositoryUri, "latest"].join(":"),
           logConfiguration: {
             logDriver: "awslogs",
             options: {
