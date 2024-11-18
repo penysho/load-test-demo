@@ -10,6 +10,7 @@ RUN apt-get update \
     && update-locale LANG=ja_JP.UTF-8 \
     && rustup component add rustfmt clippy \
     && cargo install cargo-watch \
+    && cargo install diesel_cli --no-default-features --features postgres \
     && mkdir -p /build
 
 ENV LC_ALL ja_JP.UTF-8
