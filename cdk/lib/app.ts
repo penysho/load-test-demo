@@ -1,5 +1,4 @@
 import * as cdk from "aws-cdk-lib";
-import * as codedeploy from "aws-cdk-lib/aws-codedeploy";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as ecs from "aws-cdk-lib/aws-ecs";
@@ -25,6 +24,22 @@ export class AppStack extends cdk.Stack {
    * ECR
    */
   public readonly repository: ecr.CfnRepository;
+  /**
+   * ECS Cluster
+   */
+  public readonly cluster: ecs.CfnCluster;
+  /**
+   * ECS Service
+   */
+  public readonly service: ecs.CfnService;
+  /**
+   * Blue Target Group
+   */
+  public readonly blueTargetGroup: elasticloadbalancingv2.CfnTargetGroup;
+  /**
+   * Green Target Group
+   */
+  public readonly greenTargetGroup: elasticloadbalancingv2.CfnTargetGroup;
 
   public constructor(scope: cdk.App, id: string, props: AppStackProps) {
     super(scope, id, props);
@@ -38,10 +53,10 @@ export class AppStack extends cdk.Stack {
     const containerPort = 8011;
 
     // Resources
-    const cluster = new ecs.CfnCluster(this, "Cluster", {
+    this.cluster = new ecs.CfnCluster(this, "Cluster", {
       clusterName: `${projectName}-${deployEnv}`,
     });
-    cluster.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    this.cluster.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
     const blueTargetGroup = new elasticloadbalancingv2.CfnTargetGroup(
       this,
@@ -216,8 +231,8 @@ export class AppStack extends cdk.Stack {
     });
     taskDefinition.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
-    const service = new ecs.CfnService(this, "Service", {
-      cluster: cluster.ref,
+    this.service = new ecs.CfnService(this, "Service", {
+      cluster: this.cluster.ref,
       enableExecuteCommand: true,
       launchType: "FARGATE",
       deploymentController: {
@@ -244,89 +259,6 @@ export class AppStack extends cdk.Stack {
       serviceName: `${projectName}-${deployEnv}-service`,
       taskDefinition: taskDefinition.ref,
     });
-    service.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
-
-    const codeDeploy = new codedeploy.CfnApplication(this, "CodeDeploy", {
-      applicationName: `${projectName}-${deployEnv}`,
-      computePlatform: "ECS",
-    });
-
-    const codeDeployServiceRole = new iam.CfnRole(
-      this,
-      "CodeDeployServiceRole",
-      {
-        roleName: `${projectName}-${deployEnv}-codedeploy-service-role`,
-        managedPolicyArns: ["arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"],
-        assumeRolePolicyDocument: {
-          Version: "2012-10-17",
-          Statement: [
-            {
-              Effect: "Allow",
-              Principal: {
-                Service: "codedeploy.amazonaws.com",
-              },
-              Action: "sts:AssumeRole",
-            },
-          ],
-        },
-      }
-    );
-    codeDeployServiceRole.cfnOptions.deletionPolicy =
-      cdk.CfnDeletionPolicy.DELETE;
-
-    const deploymentGroup = new codedeploy.CfnDeploymentGroup(
-      this,
-      "DeploymentGroup",
-      {
-        applicationName: codeDeploy.ref,
-        autoRollbackConfiguration: {
-          enabled: true,
-          events: ["DEPLOYMENT_FAILURE"],
-        },
-        blueGreenDeploymentConfiguration: {
-          deploymentReadyOption: {
-            actionOnTimeout: "STOP_DEPLOYMENT",
-            waitTimeInMinutes: 30,
-          },
-          terminateBlueInstancesOnDeploymentSuccess: {
-            action: "TERMINATE",
-            terminationWaitTimeInMinutes: 30,
-          },
-        },
-        deploymentConfigName: "CodeDeployDefault.ECSAllAtOnce",
-        deploymentGroupName: `${projectName}-${deployEnv}-group1`,
-        deploymentStyle: {
-          deploymentOption: "WITH_TRAFFIC_CONTROL",
-          deploymentType: "BLUE_GREEN",
-        },
-        ecsServices: [
-          {
-            clusterName: cluster.ref,
-            serviceName: service.attrName,
-          },
-        ],
-        loadBalancerInfo: {
-          targetGroupPairInfoList: [
-            {
-              targetGroups: [
-                {
-                  name: blueTargetGroup.attrTargetGroupName,
-                },
-                {
-                  name: greenTargetGroup.attrTargetGroupName,
-                },
-              ],
-              prodTrafficRoute: {
-                listenerArns: [props.elbStack.Elb443Listener.attrListenerArn],
-              },
-              testTrafficRoute: {
-                listenerArns: [props.elbStack.GreenListener.attrListenerArn],
-              },
-            },
-          ],
-        },
-        serviceRoleArn: codeDeployServiceRole.attrArn,
-      }
-    );
+    this.service.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
   }
 }
