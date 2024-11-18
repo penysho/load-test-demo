@@ -54,7 +54,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-def-api.json
-          container-name: api
+          container-name: app
           image: ${{ steps.login-ecr.outputs.registry }}/load-test-demo-tst:${{ github.sha }}
 
       - name: Deploy app with CodeDeploy Blue/Green deployment
