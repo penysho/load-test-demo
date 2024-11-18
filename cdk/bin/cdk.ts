@@ -36,5 +36,6 @@ const appStack = new AppStack(app, `${projectName}-app-${deployEnv}`, {
 
 new CiStack(app, `${projectName}-ci-${deployEnv}`, {
   ...envProps,
+  elbStack: elbStack,
   appStack: appStack,
 });
