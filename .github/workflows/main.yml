@@ -1,4 +1,4 @@
-name: Deploy to Amazon ECS using Blue/Green deployment
+name: Deploy to Amazon ECS
 
 on:
   push:
