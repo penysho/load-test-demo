@@ -58,7 +58,7 @@ export class AppStack extends cdk.Stack {
     });
     this.cluster.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
-    const blueTargetGroup = new elasticloadbalancingv2.CfnTargetGroup(
+    this.blueTargetGroup = new elasticloadbalancingv2.CfnTargetGroup(
       this,
       "BlueTargetGroup",
       {
@@ -71,9 +71,10 @@ export class AppStack extends cdk.Stack {
         healthCheckPort: containerPort.toString(),
       }
     );
-    blueTargetGroup.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    this.blueTargetGroup.cfnOptions.deletionPolicy =
+      cdk.CfnDeletionPolicy.DELETE;
 
-    const greenTargetGroup = new elasticloadbalancingv2.CfnTargetGroup(
+    this.greenTargetGroup = new elasticloadbalancingv2.CfnTargetGroup(
       this,
       "GreenTargetGroup",
       {
@@ -86,13 +87,14 @@ export class AppStack extends cdk.Stack {
         healthCheckPort: containerPort.toString(),
       }
     );
-    greenTargetGroup.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    this.greenTargetGroup.cfnOptions.deletionPolicy =
+      cdk.CfnDeletionPolicy.DELETE;
 
     const logGroup = new logs.CfnLogGroup(this, "LogGroup", {
       logGroupName: `/ecs/${projectName}-${deployEnv}`,
       retentionInDays: 90,
     });
-    logGroup.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
+    logGroup.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
     this.repository = new ecr.CfnRepository(this, "Repository", {
       repositoryName: `${projectName}-${deployEnv}`,
@@ -101,7 +103,7 @@ export class AppStack extends cdk.Stack {
           '{"rules":[{"rulePriority":1,"description":"Expire images older than 3 generations","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":3},"action":{"type":"expire"}}]}',
       },
     });
-    this.repository.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
+    this.repository.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
 
     const taskExecutionRole = new iam.CfnRole(this, "TaskExecutionRole", {
       roleName: `${projectName}-${deployEnv}-task-execution-role`,
@@ -241,7 +243,7 @@ export class AppStack extends cdk.Stack {
       desiredCount: 1,
       loadBalancers: [
         {
-          targetGroupArn: blueTargetGroup.ref,
+          targetGroupArn: this.blueTargetGroup.ref,
           containerPort: containerPort,
           containerName: containerName,
         },
