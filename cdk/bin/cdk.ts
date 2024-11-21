@@ -15,26 +15,26 @@ const envProps = {
   region: process.env.CDK_DEFAULT_REGION,
 };
 
-const vpcStack = new VpcStack(app, `${projectName}-vpc-${deployEnv}`, {});
+const vpcStack = new VpcStack(app, `${projectName}-${deployEnv}-vpc`, {});
 
-const elbStack = new ElbStack(app, `${projectName}-elb-${deployEnv}`, {
+const elbStack = new ElbStack(app, `${projectName}-${deployEnv}-elb`, {
   ...envProps,
   vpcStack: vpcStack,
 });
 
-const rdsStack = new RdsStack(app, `${projectName}-rds-${deployEnv}`, {
+const rdsStack = new RdsStack(app, `${projectName}-${deployEnv}-rds`, {
   ...envProps,
   vpcStack: vpcStack,
 });
 
-const appStack = new AppStack(app, `${projectName}-app-${deployEnv}`, {
+const appStack = new AppStack(app, `${projectName}-${deployEnv}-app`, {
   ...envProps,
   vpcStack: vpcStack,
   elbStack: elbStack,
   rdsStack: rdsStack,
 });
 
-new CiStack(app, `${projectName}-ci-${deployEnv}`, {
+new CiStack(app, `${projectName}-${deployEnv}-ci`, {
   ...envProps,
   elbStack: elbStack,
   appStack: appStack,
