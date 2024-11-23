@@ -1,14 +1,19 @@
 name: Deploy to Amazon ECS
 
-on:
+'on':
   push:
     branches:
       - main
 
 env:
+  # ECR repository.
   REPOSITORY_NAME: load-test-demo-tst
+  # Name of the project (directory) in the repository to be operated on.
   PROJECT_NAME: backend
+  # Assume role to be used for deploying to AWS.
   ROLE_TO_ASSUME: ${{ vars.TST_ROLE_TO_ASSUME }}
+  # Relative path of dockerfile used for build.
+  DOCKERFILE_PATH: docker/backend/Dockerfile.prod
 
 jobs:
   push:
@@ -33,10 +38,15 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Run tests
+        run: |
+          docker compose up -d
+          docker compose exec backend cargo test
+
       - name: Docker image build and push to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: load-test-demo-tst
+          REPOSITORY: ${{ env.REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
           DOCKERFILE_PATH: docker/backend/Dockerfile.prod
         run: |
@@ -46,7 +56,7 @@ jobs:
 
       - name: Fetch TaskDefinition from ECS and generate task-def-api.json (api)
         run: |
-          aws ecs describe-task-definition --task-definition load-test-demo-tst | \
+          aws ecs describe-task-definition --task-definition ${{ env.REPOSITORY_NAME }} | \
             jq '.taskDefinition | del (.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities)' > task-def-api.json
 
       - name: Render TaskDefinition
@@ -55,14 +65,15 @@ jobs:
         with:
           task-definition: task-def-api.json
           container-name: app
-          image: ${{ steps.login-ecr.outputs.registry }}/load-test-demo-tst:${{ github.sha }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY_NAME }}:${{
+            github.sha }}
 
       - name: Deploy app with CodeDeploy Blue/Green deployment
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-container-api.outputs.task-definition }}
-          cluster: load-test-demo-tst
-          service: load-test-demo-tst-service
+          cluster: ${{ env.REPOSITORY_NAME }}
+          service: ${{ env.REPOSITORY_NAME }}-service
           codedeploy-appspec: codedeploy/appspec.yml
-          codedeploy-application: load-test-demo-tst
-          codedeploy-deployment-group: load-test-demo-tst-group1
+          codedeploy-application: ${{ env.REPOSITORY_NAME }}
+          codedeploy-deployment-group: ${{ env.REPOSITORY_NAME }}-group1
