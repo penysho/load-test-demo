@@ -33,7 +33,7 @@
         // Git
         "mhutchie.git-graph",
         "eamodio.gitlens",
-        // 共通
+        // Common
         "ms-ceintl.vscode-language-pack-ja",
         "visualstudioexptteam.vscodeintellicode",
         "visualstudioexptteam.intellicode-api-usage-examples",
